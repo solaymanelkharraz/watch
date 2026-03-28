@@ -1,5 +1,5 @@
 <?php
-// DB Connection
+// --- DB CONFIG ---
 $host = getenv('DB_HOST') ?: 'mysql-jbala.alwaysdata.net';
 $db   = getenv('DB_NAME') ?: 'jbala_watch';
 $user = getenv('DB_USER') ?: 'jbala';
@@ -9,31 +9,49 @@ try {
     $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // API Fetch Logic (Improved for Movies)
+    // --- IMPROVED FETCH LOGIC ---
     function fetchMedia($title, $type) {
         $q = urlencode($title);
         if ($type === 'anime') {
             $res = @json_decode(file_get_contents("https://api.jikan.moe/v4/anime?q=$q&limit=1"), true);
             $item = $res['data'][0] ?? null;
-            return ['img' => $item['images']['jpg']['large_image_url'] ?? '', 'sum' => $item['synopsis'] ?? 'No summary.', 'tot' => $item['episodes'] ?? 0];
+            return [
+                'img' => $item['images']['jpg']['large_image_url'] ?? '', 
+                'sum' => $item['synopsis'] ?? 'No summary.', 
+                'tot' => $item['episodes'] ?? 0
+            ];
         } else {
-            // TVmaze for Series and Movies
-            $res = @json_decode(file_get_contents("https://api.tvmaze.com/singlesearch/shows?q=$q"), true);
-            return ['img' => $res['image']['original'] ?? '', 'sum' => strip_tags($res['summary'] ?? 'No summary.'), 'tot' => 0];
+            // Better Movie/Series search using TVmaze search array
+            $res = @json_decode(file_get_contents("https://api.tvmaze.com/search/shows?q=$q"), true);
+            $best = null;
+            if (!empty($res)) {
+                foreach($res as $entry) {
+                    if ($entry['show']['image']) { $best = $entry['show']; break; }
+                }
+                if (!$best) $best = $res[0]['show'];
+            }
+            return [
+                'img' => $best['image']['original'] ?? $best['image']['medium'] ?? '',
+                'sum' => strip_tags($best['summary'] ?? 'No summary.'),
+                'tot' => 0
+            ];
         }
     }
 
+    // --- ADD LOGIC ---
     if (isset($_POST['add'])) {
         $t = $_POST['type'];
-        $m = fetchMedia($_POST['title'], $t);
+        $title = $_POST['title'];
+        $m = fetchMedia($title, $t);
         $table = "table_" . $t;
         
         if ($t === 'movies') {
             $stmt = $pdo->prepare("INSERT INTO $table (title, poster_url, summary) VALUES (?,?,?)");
-            $stmt->execute([$_POST['title'], $m['img'], $m['sum']]);
+            $stmt->execute([$title, $m['img'], $m['sum']]);
         } else {
+            // Anime and Series now use the same columns
             $stmt = $pdo->prepare("INSERT INTO $table (title, poster_url, summary, total_eps) VALUES (?,?,?,?)");
-            $stmt->execute([$_POST['title'], $m['img'], $m['sum'], $m['tot']]);
+            $stmt->execute([$title, $m['img'], $m['sum'], $m['tot']]);
         }
         header("Location: index.php"); exit;
     }
@@ -42,53 +60,45 @@ try {
     $series = $pdo->query("SELECT * FROM table_series ORDER BY id DESC")->fetchAll();
     $movies = $pdo->query("SELECT * FROM table_movies WHERE status='to-watch' ORDER BY id DESC")->fetchAll();
 
-} catch (Exception $e) { die("Error: " . $e->getMessage()); }
+} catch (Exception $e) { $error = $e->getMessage(); }
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Media Library</title>
+    <meta charset="UTF-8">
+    <title>My Media Hub</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <form class="add-form" method="POST">
-        <input type="text" name="title" placeholder="Enter Title..." style="flex:1" required>
-        <select name="type">
-            <option value="anime">Anime</option>
-            <option value="series">Series</option>
-            <option value="movies">Movie</option>
-        </select>
-        <button type="submit" name="add">Add</button>
-    </form>
+    <div class="container">
+        <form class="add-box" method="POST">
+            <input type="text" name="title" placeholder="Search and add..." style="flex:1" required>
+            <select name="type">
+                <option value="anime">Anime</option>
+                <option value="series">Series</option>
+                <option value="movies">Movie</option>
+            </select>
+            <button type="submit" name="add" class="btn-main">Add to Library</button>
+        </form>
 
-    <h2>My Anime</h2>
-    <div class="grid">
-        <?php foreach($animes as $a): ?>
-            <a href="details.php?type=anime&id=<?= $a['id'] ?>" class="card">
-                <img src="<?= $a['poster_url'] ?>">
-                <div><?= $a['title'] ?> <br> <small>Ep: <?= $a['current_ep'] ?></small></div>
-            </a>
-        <?php endforeach; ?>
-    </div>
-
-    <h2>My Series</h2>
-    <div class="grid">
-        <?php foreach($series as $s): ?>
-            <a href="details.php?type=series&id=<?= $s['id'] ?>" class="card">
-                <img src="<?= $s['poster_url'] ?>">
-                <div><?= $s['title'] ?> <br> <small>S<?= $s['current_season'] ?> E<?= $s['current_ep'] ?></small></div>
-            </a>
-        <?php endforeach; ?>
-    </div>
-
-    <h2>Movies to Watch</h2>
-    <div class="grid">
-        <?php foreach($movies as $m): ?>
-            <a href="details.php?type=movies&id=<?= $m['id'] ?>" class="card">
-                <img src="<?= $m['poster_url'] ?>">
-                <div><?= $m['title'] ?></div>
-            </a>
-        <?php endforeach; ?>
+        <?php $sections = ['Anime' => $animes, 'Series' => $series, 'Movies' => $movies]; ?>
+        <?php foreach($sections as $label => $list): if($list): ?>
+            <h2><?= $label ?></h2>
+            <div class="grid">
+                <?php foreach($list as $r): ?>
+                    <a href="details.php?type=<?= strtolower($label) ?>&id=<?= $r['id'] ?>" class="card">
+                        <?php if(isset($r['current_ep'])): ?>
+                            <div class="ep-tag">S<?= $r['current_season'] ?> E<?= $r['current_ep'] ?></div>
+                        <?php endif; ?>
+                        <img src="<?= $r['poster_url'] ?: 'https://via.placeholder.com/200x300' ?>">
+                        <div class="card-info">
+                            <span class="card-title"><?= htmlspecialchars($r['title']) ?></span>
+                        </div>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; endforeach; ?>
     </div>
 </body>
 </html>
