@@ -22,7 +22,7 @@ try {
     }
 
     if (isset($_GET['delete'])) {
-        
+
         $pdo->prepare("DELETE FROM $table WHERE id = ?")->execute([$id]);
         header("Location: index.php");
         exit;
@@ -39,6 +39,8 @@ try {
 
 <head>
     <title>Details</title>
+        <link rel="stylesheet" href="style.css">
+
 </head>
 
 <body>
