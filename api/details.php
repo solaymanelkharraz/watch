@@ -35,13 +35,6 @@ try {
 <html>
 <head>
     <title>Details</title>
-    <style>
-        body { background: #0a0a0a; color: #fff; font-family: sans-serif; padding: 40px; }
-        .flex { display: flex; gap: 40px; }
-        img { width: 300px; border-radius: 10px; }
-        .btn { padding: 10px 20px; background: #00d1b2; border: none; color: #000; font-weight: bold; cursor: pointer; }
-        .del { color: #ff3860; text-decoration: none; margin-top: 20px; display: block; }
-    </style>
 </head>
 <body>
     <a href="index.php" style="color:#aaa;">← Back</a>

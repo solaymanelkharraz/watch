@@ -49,15 +49,6 @@ try {
 <html>
 <head>
     <title>Media Library</title>
-    <style>
-        body { background: #0a0a0a; color: #fff; font-family: sans-serif; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-bottom: 40px; }
-        .card { background: #1a1a1a; border-radius: 8px; overflow: hidden; text-decoration: none; color: white; border: 1px solid #333; }
-        .card img { width: 100%; height: 230px; object-fit: cover; }
-        .card div { padding: 10px; font-size: 0.8rem; text-align: center; }
-        .add-form { background: #1a1a1a; padding: 20px; border-radius: 10px; margin-bottom: 30px; display: flex; gap: 10px; }
-        h2 { border-left: 4px solid #00d1b2; padding-left: 10px; color: #00d1b2; }
-    </style>
 </head>
 <body>
     <form class="add-form" method="POST">
