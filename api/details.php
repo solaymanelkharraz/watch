@@ -39,36 +39,42 @@ try {
 
 <head>
     <title>Details</title>
-        <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css">
 
 </head>
 
 <body>
-    <a href="index.php" style="color:#aaa;">← Back</a>
-    <div class="flex">
-        <img src="<?= $item['poster_url'] ?>">
-        <div>
-            <h1><?= $item['title'] ?></h1>
-            <p><?= $item['summary'] ?></p>
+    <div class="container">
+        <a href="index.php" class="back-link">← Back to Dashboard</a>
 
-            <form method="POST">
-                <?php if ($type === 'anime'): ?>
-                    <label>Current Episode:</label><br>
-                    <input type="number" name="ep" value="<?= $item['current_ep'] ?>" style="width:60px; padding:10px;">
-                <?php elseif ($type === 'series'): ?>
-                    <label>Season:</label> <input type="number" name="season" value="<?= $item['current_season'] ?>" style="width:40px;">
-                    <label>Episode:</label> <input type="number" name="ep" value="<?= $item['current_ep'] ?>" style="width:40px;">
-                <?php elseif ($type === 'movies'): ?>
-                    <p>Status: To Watch</p>
-                <?php endif; ?>
+        <div class="hero">
+            <img src="<?= $item['poster_url'] ?>">
 
-                <br><br>
-                <button type="submit" name="update" class="btn">
-                    <?= ($type === 'movies') ? 'Mark as Watched' : 'Save Progress' ?>
-                </button>
-            </form>
+            <div class="hero-content">
+                <h1><?= htmlspecialchars($item['title']) ?></h1>
+                <p><?= htmlspecialchars($item['summary']) ?></p>
 
-            <a href="?type=<?= $type ?>&id=<?= $id ?>&delete=1" class="del" onclick="return confirm('Delete?')">Remove from library</a>
+                <div class="controls-box">
+                    <h3>Update Progress</h3>
+                    <form method="POST">
+                        <input type="hidden" name="id" value="<?= $item['id'] ?>">
+
+                        <?php if ($type !== 'movies'): ?>
+                            <label>Season:</label>
+                            <input type="number" name="season" class="ep-input" value="<?= $item['current_season'] ?>">
+
+                            <label>Episode:</label>
+                            <input type="number" name="ep" class="ep-input" value="<?= $item['current_ep'] ?>">
+                        <?php else: ?>
+                            <p>Status: Still on the watchlist.</p>
+                        <?php endif; ?>
+
+                        <button type="submit" name="update">Save Changes</button>
+                    </form>
+                </div>
+
+                <a href="?type=<?= $type ?>&id=<?= $id ?>&delete=1" class="del-btn" onclick="return confirm('Remove permanently?')">Delete from Library</a>
+            </div>
         </div>
     </div>
 </body>
