@@ -63,11 +63,13 @@ try {
 
                             <label>Episode:</label>
                             <input type="number" name="ep" class="ep-input" value="<?= $item['current_ep'] ?>">
-                        <?php else: ?>
-                            <p>Status: Still on the watchlist.</p>
-                        <?php endif; ?>
 
-                        <button type="submit" name="update">Save Changes</button>
+                            <button type="submit" name="update">Save Progress</button>
+                            <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+                            <button type="submit" name="mark_finished" style="background: #23d160; width: 100%;">Complete & Move to History</button>
+                        <?php else: ?>
+                            <button type="submit" name="mark_finished" style="background: #23d160; width: 100%;">Mark as Watched</button>
+                        <?php endif; ?>
                     </form>
                 </div>
 
