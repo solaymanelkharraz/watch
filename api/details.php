@@ -9,21 +9,19 @@ try {
     $type = $_GET['type'];
     $id = (int)$_GET['id'];
     $table = "table_" . $type;
-
     if (isset($_POST['update'])) {
         if ($type === 'anime' || $type === 'series') {
             $stmt = $pdo->prepare("UPDATE $table SET current_season = ?, current_ep = ? WHERE id = ?");
             $stmt->execute([$_POST['season'], $_POST['ep'], $id]);
-        } elseif ($type === 'movies') {
-            $pdo->prepare("UPDATE table_movies SET status = 'watched' WHERE id = ?")->execute([$id]);
         }
         header("Location: index.php");
         exit;
     }
 
-    if (isset($_GET['delete'])) {
-
-        $pdo->prepare("DELETE FROM $table WHERE id = ?")->execute([$id]);
+    // NEW: Handle marking as finished (History)
+    if (isset($_POST['mark_finished'])) {
+        $stmt = $pdo->prepare("UPDATE $table SET status = 'watched' WHERE id = ?");
+        $stmt->execute([$id]);
         header("Location: index.php");
         exit;
     }
